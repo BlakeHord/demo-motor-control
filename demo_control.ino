@@ -29,7 +29,7 @@ int fire_input = 3;
 int arm_led = 4;
 int fire_led = 5;
 
-int o2_relay = 8;
+int o2_output = A1;
 int propane_relay = 11;
 int arm_relay = 12;
 int fire_relay = 13;
@@ -61,12 +61,12 @@ void setup() {
   digitalWrite(fire_led, LOW);
 
   // Relay Pins
-  pinMode(o2_relay, OUTPUT);
+  pinMode(o2_output, OUTPUT);
   pinMode(propane_relay, OUTPUT);
   pinMode(arm_relay, OUTPUT);
   pinMode(fire_relay, OUTPUT);
 
-  digitalWrite(o2_relay, HIGH);
+  digitalWrite(o2_output, HIGH);
   digitalWrite(propane_relay, HIGH);
   digitalWrite(arm_relay, HIGH);
   digitalWrite(fire_relay, HIGH);
@@ -88,11 +88,11 @@ void loop() {
   while (debounce(o2_input) == true) {
     Serial.println("oxygen vent on");
     Serial.println(count);
-    digitalWrite(o2_relay, LOW);
+    digitalWrite(o2_output, LOW);
     led_green();
     currentAction = 1;
   }
-  digitalWrite(o2_relay, HIGH);
+  digitalWrite(o2_output, HIGH);
 
   
   // PROPANE VENT CONTROLLER
@@ -147,7 +147,7 @@ void loop() {
     if (debounce(fire_input) == true) {
       Serial.println("Flowing O2 and Propane for 1 second");
       while (debounce(fire_input) == true && (millis() - current) < 1000) {
-        digitalWrite(o2_relay, LOW);
+        digitalWrite(o2_output, LOW);
         digitalWrite(propane_relay, LOW);
       }
     } else {
@@ -158,7 +158,7 @@ void loop() {
     if (debounce(fire_input) == true) {
       Serial.println("Spark plug on");
       while (debounce(fire_input) == true && (millis() - current) < 2000) {
-        digitalWrite(o2_relay, LOW);
+        digitalWrite(o2_output, LOW);
         digitalWrite(propane_relay, LOW);
         digitalWrite(fire_relay, LOW); // turns on spark plug
       }
@@ -180,7 +180,7 @@ void loop() {
     }
 
     // Just to make sure that everything is off
-    digitalWrite(o2_relay, HIGH);
+    digitalWrite(o2_output, HIGH);
     digitalWrite(propane_relay, HIGH);
     digitalWrite(arm_relay, HIGH);
     digitalWrite(fire_relay, HIGH);
