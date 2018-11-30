@@ -1,18 +1,15 @@
 /*  Demonstration Motor Controls
      Blake Hord
-     Last Updated September 28, 2018
+     Last Updated November 30, 2018
 
      For use in the hybrid motor to be used in Stanford's AA 103 Propulsion Class
      Developed in Professor Brian Cantwell's lab under the guidance of PhD students Flora Mechentel and David Dyrda
 */
 
-// currentPalette = PartyColors_p;           currentBlending = LINEARBLEND;
-// currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND;
-
 #include <FastLED.h>
 
 #define LED_PIN     10
-#define NUM_LEDS    83
+#define NUM_LEDS    82
 #define BRIGHTNESS  16
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
@@ -38,6 +35,10 @@ unsigned long count = 0;
 bool armed = false;
 int currentAction = 0;
 
+// Ignition sequence in seconds
+int spark_time = 1;
+int prop_flow = 2;
+
 bool debounce(int pin);
 void FillLEDsFromPaletteColors(uint8_t colorIndex);
 void led_white();
@@ -57,6 +58,7 @@ void setup() {
   pinMode(arm_led, OUTPUT);
   pinMode(fire_led, OUTPUT);
 
+  // LED's for arming and firing
   digitalWrite(arm_led, LOW);
   digitalWrite(fire_led, LOW);
 
@@ -66,6 +68,7 @@ void setup() {
   pinMode(arm_relay, OUTPUT);
   pinMode(fire_relay, OUTPUT);
 
+  // Setting relay pins to HIGH. HIGH == off for relay
   digitalWrite(o2_output, HIGH);
   digitalWrite(propane_relay, HIGH);
   digitalWrite(arm_relay, HIGH);
@@ -74,13 +77,14 @@ void setup() {
   // Serial with 57600 baud rate
   Serial.begin(57600);
 
+  // Initialize LED strip as white
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
   led_white();
 }
 
 
-// I'm going to try to complete this without messy interrupts but we'll see how that works
+// Main motor control loop
 void loop() {
   count += 1;
 
@@ -110,6 +114,7 @@ void loop() {
   if (debounce(arm_input) == true) {
     while (debounce(arm_input) == true);
 
+    // If armed, make disarmed. If disarmed, make armed
     if (armed == true) {
       digitalWrite(arm_relay, HIGH);
       digitalWrite(arm_led, LOW);
@@ -130,6 +135,7 @@ void loop() {
     }
   }
 
+  // Return to white if not armed
   if (currentAction == 0) {
     led_white();
   }
@@ -146,7 +152,7 @@ void loop() {
     // Start o2 and propane for 1 second
     if (debounce(fire_input) == true) {
       Serial.println("Flowing O2 and Propane for 1 second");
-      while (debounce(fire_input) == true && (millis() - current) < 1000) {
+      while (debounce(fire_input) == true && (millis() - current) < ((prop_flow - spark_time) * 1000)) {
         digitalWrite(o2_output, LOW);
         digitalWrite(propane_relay, LOW);
       }
@@ -157,7 +163,7 @@ void loop() {
     // Keep o2 and propane on while turning on fire relay to start spark plug for 1 second
     if (debounce(fire_input) == true) {
       Serial.println("Spark plug on");
-      while (debounce(fire_input) == true && (millis() - current) < 2000) {
+      while (debounce(fire_input) == true && (millis() - current) < spark_time) {
         digitalWrite(o2_output, LOW);
         digitalWrite(propane_relay, LOW);
         digitalWrite(fire_relay, LOW); // turns on spark plug
@@ -200,7 +206,7 @@ void loop() {
 }
 
 
-
+// Debounce function to get accurate button pressing input
 bool debounce(int pin) {
   if (digitalRead(pin) == HIGH) {
     delay(10);
@@ -214,9 +220,9 @@ bool debounce(int pin) {
   return false;
 }
 
+// Function to make LED's a certain color
 void FillLEDsFromPaletteColors(uint8_t colorIndex) {
   uint8_t brightness = 255;
-    
   for( int i = 0; i < NUM_LEDS; i++) {
     leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
     colorIndex += 3;
