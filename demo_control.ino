@@ -1,6 +1,6 @@
 /*  Demonstration Motor Controls
      Blake Hord
-     Last Updated November 30, 2018
+     Last Updated February 26, 2019
 
      For use in the hybrid motor to be used in Stanford's AA 103 Propulsion Class
      Developed in Professor Brian Cantwell's lab under the guidance of PhD students Flora Mechentel and David Dyrda
@@ -35,9 +35,8 @@ unsigned long count = 0;
 bool armed = false;
 int currentAction = 0;
 
-// Ignition sequence in seconds
-int spark_time = 1;
-int prop_flow = 2;
+// Ignition sequence in milliseconds
+int spark_time = 250;
 
 bool debounce(int pin);
 void FillLEDsFromPaletteColors(uint8_t colorIndex);
@@ -147,20 +146,9 @@ void loop() {
     digitalWrite(fire_led, HIGH);
     Serial.println("Commencing firing sequence");
     led_red();
-    currentAction = 4;
+    currentAction = 4; 
     
-    // Start o2 and propane for 1 second
-    if (debounce(fire_input) == true) {
-      Serial.println("Flowing O2 and Propane for 1 second");
-      while (debounce(fire_input) == true && (millis() - current) < ((prop_flow - spark_time) * 1000)) {
-        digitalWrite(o2_output, LOW);
-        digitalWrite(propane_relay, LOW);
-      }
-    } else {
-      Serial.println("Fire aborted before starting O2 and propane flow");
-    }
-    
-    // Keep o2 and propane on while turning on fire relay to start spark plug for 1 second
+    // Keep o2 and propane on while turning on fire relay to start spark plug for 250 millisecond
     if (debounce(fire_input) == true) {
       Serial.println("Spark plug on");
       while (debounce(fire_input) == true && (millis() - current) < spark_time) {
